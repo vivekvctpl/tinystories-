@@ -19,8 +19,6 @@
     #input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; outline: none; }
     #sendbtn { background: #2c3e50; color: white; border: none; border-radius: 20px; padding: 10px 20px; font-size: 15px; cursor: pointer; }
     #sendbtn:disabled { background: #aaa; cursor: not-allowed; }
-
-    /* Loading overlay */
     #overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85);
@@ -29,7 +27,6 @@
       z-index: 999; color: white; text-align: center; padding: 30px;
     }
     #overlay.hidden { display: none; }
-
     .spinner {
       width: 80px; height: 80px;
       border: 8px solid rgba(255,255,255,0.2);
@@ -39,10 +36,8 @@
       margin-bottom: 24px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     #overlay h2 { font-size: 22px; margin-bottom: 10px; }
     #overlay p { font-size: 14px; color: #ccc; margin-bottom: 20px; }
-
     #progressbar-wrap {
       width: 100%; max-width: 320px;
       background: rgba(255,255,255,0.15);
@@ -61,7 +56,6 @@
 </head>
 <body>
 
-<!-- Loading Overlay -->
 <div id="overlay">
   <div class="spinner"></div>
   <h2>🦙 Loading TinyLlama AI</h2>
@@ -97,9 +91,10 @@
   let generator;
   let history = [];
   let seconds = 0;
+  let overlayDismissed = false;
 
-  // Start timer
   const timerInterval = setInterval(() => {
+    if (overlayDismissed) return;
     seconds++;
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -120,6 +115,7 @@
 
     generator = await pipeline('text-generation', 'Xenova/TinyLlama-1.1B-Chat-v1.0', {
       progress_callback: (progress) => {
+        if (overlayDismissed) return;
         if (progress.status === 'downloading') {
           const pct = progress.progress ? Math.round(progress.progress) : 0;
           const loaded = progress.loaded ? (progress.loaded / 1024 / 1024).toFixed(1) : '?';
@@ -135,6 +131,7 @@
     });
 
     clearInterval(timerInterval);
+    overlayDismissed = true;
     overlay.classList.add('hidden');
     statusEl.textContent = '✅ Ready! Ask me anything.';
     statusEl.className = 'ready';
